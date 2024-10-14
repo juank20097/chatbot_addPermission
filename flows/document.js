@@ -2,45 +2,73 @@ const { addKeyword } = require('@bot-whatsapp/bot');
 const Permission = require('../models/permission');
 
 let permissionsArray = [];
-const permissionInstance = new Permission();
+let permissionInstance = new Permission();
 
-const flowSelectDescriptionOrigen = addKeyword(['Grupo arquitectura'])
-    .addAnswer(
-        'Gracias por usar el sistema de generación de permisos. ¡Hasta pronto!'
-    )
-
-const flowGArquitectura = addKeyword(['Grupo arquitectura'])
+const flowDesGArquitectura = addKeyword(['Grupo Arquitectura'])
     .addAction(() => {
-        permissionInstance.ipOrigen = 'Grupo Arquitectura';
+        permissionInstance.descriptionOrigin = 'Grupo Arquitectura';
+        return flowSelectAreaOrigen;
+    })
+
+const flowDesOrigen = addKeyword(['2','otro'])
+    .addAction(() => {
+        permissionInstance.descriptionOrigin = 'Grupo Arquitectura';
+        return flowSelectAreaOrigen;
+    })
+
+
+
+
+
+
+
+
+
+const flowGArquitectura = addKeyword(['1','Grupo Arquitectura', 'grupo', 'arquitectura'])
+    .addAction(() => {
+        permissionInstance.ipOrigin = 'Grupo Arquitectura';
+        console.error('IP de Origen guardada: ' + permissionInstance.ipOrigin);
     })
     .addAnswer(
-    null,
-    null,
-    null,
-    [flowSelectDescriptionOrigen]
-)
+        [
+            'Ingresa la opción de Descripción de Origen:',
+            '👉 1. Grupo Arquitectura',
+            '👉 2. Otro'
+        ],
+        null,
+        null,
+        [flowDesOrigen, flowDesGArquitectura]
+    )
 
-const flowIpOrigen = addKeyword(['otro'])
-    .addAnswer('Has seleccionado Otro.')
-    .addAnswer('Por favor, ingrese la IP de Origen:', null, (ctx) => {
-        permissionInstance.ipOrigin = ctx.body; 
-    },
-    [flowSelectDescriptionOrigen]
+    const flowIpOrigen = addKeyword(['2', 'otro']) // Detecta la palabra clave "2" o "otro"
+    .addAnswer('Has seleccionado la opción "Otro".')
+    .addAnswer('Por favor, ingrese la dirección IP de Origen:',{ capture: true },(ctx) => {
+        permissionInstance.ipOrigin = ctx.body;
+        console.error('IP de Origen guardada:', permissionInstance.ipOrigin);
+    })
+    .addAnswer(
+        [
+            'Ingresa la opción de Descripción de Origen:',
+            '👉 1. Grupo Arquitectura',
+            '👉 2. Otro'
+        ],
+        null,
+        null,
+        [flowDesOrigen, flowDesGArquitectura]
     );
 
-
 const flowPrincipal = addKeyword(['documento'])
+    .addAction(() => {
+        permissionInstance = new Permission();  
+    })
     .addAnswer('Bienvenido a la generación de Permisos')
     .addAnswer(
         [
-            'Selecciona la dirección de IP de Origen',
+            'Ingresa la opción de dirección de IP de Origen:',
+            '👉 1. Grupo Arquitectura',
+            '👉 2. Otro'
         ],
-        {
-            buttons: [
-                { body: 'Grupo Arquitectura' },
-                { body: 'Otro' },
-            ],
-        },
+        null,
         null,
         [flowIpOrigen, flowGArquitectura]
     )

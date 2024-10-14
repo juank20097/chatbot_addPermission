@@ -1,6 +1,5 @@
 class Permission {
     constructor(
-        id = null,
         ipOrigin = '',
         descriptionOrigin = '',
         areaOrigin = '',
@@ -11,7 +10,6 @@ class Permission {
         ports = '',
         duration = ''
     ) {
-        this.id = id; // Se asignará automáticamente cuando sea necesario
         this.ipOrigin = ipOrigin;
         this.descriptionOrigin = descriptionOrigin;
         this.areaOrigin = areaOrigin;
