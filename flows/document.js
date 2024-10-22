@@ -3,33 +3,31 @@ const Permission = require('../models/permission');
 
 let permissionsArray = [];
 let permissionInstance = new Permission();
-let password_signer= "";
 
 /*--------Firma de Documento--------------------------------------------------------------*/
 
-const flowSigner = addKeyword([password_signer])
+const flowSigner = addKeyword([])
     .addAnswer(
-        '⏳ *Perfecto*, para finalizar ingresa la clave de tu firma electrónica para proceder a entregarte el documento firmado:',
-        { capture: true }, 
-        (ctx) => {
-            password_signer = ctx.body.trim();
-            console.log('🔑 Password Signer:', password_signer);
-        },
-        [] 
-    );
+        '🙏 *Gracias por tu paciencia.*' )
+    .addAnswer(
+        '👨‍💻 *Información del Desarrollador:* \n' +
+        '📛 *Nombre:* Juan Carlos Estévez Hidalgo \n' +
+        '📧 *Correo:* juank20097@gmail.com \n' +
+        '📱 *Teléfono:* +593 980365958 \n' +
+        '📂 *Repositorio GitHub:* https://github.com/juank20097 \n' )
+    .addAnswer(
+            '✅ El proceso ha finalizado con éxito.' )
 
 /*--------Validación de otro Permiso--------------------------------------------------------------*/
 const flowOtroPermisoNo = addKeyword(['2'])
     .addAnswer(
-        '✨ *¡Genial!* Solo un paso más. \n' +
-        '🔑 Por favor, ingresa la clave de tu firma electrónica para poder entregarte el documento firmado.'
-        { capture: true }, 
-        (ctx) => {
-            password_signer="";
-            password_signer = ctx.body.trim();
-            console.log('🔑 Password Signer:', password_signer);
-        },
-        [flowSigner] 
+        '⏳ *Por favor, espera.* \n' +
+        '📝 Estamos generando tu documento de permiso. Te lo enviaremos en breve.'
+    )
+    .addAction(async (ctx, {provider, gotoFlow}) => {
+        await provider.sendFile(ctx.from+'@s.whatsapp.net', 'documents/frontend.pdf')
+        return gotoFlow(flowSigner)
+    }
     );
 
 const flowOtroPermisoSi = addKeyword(['1'])
@@ -62,16 +60,16 @@ const flowVerSi = addKeyword(['1'])
         '👉 *1.* Sí',
         '👉 *2.* No'
     ],
-    { capture: true }, // Capturar la respuesta del usuario
+    { capture: true }, 
         (ctx, { flowDynamic, fallBack }) => {
-            const respuesta = ctx.body.trim(); // Obtener y limpiar la respuesta
-            console.log('Opción de otroPermiso seleccionada:', respuesta); // Log de respuesta
+            const respuesta = ctx.body.trim(); 
+            console.log('Opción de otroPermiso seleccionada:', respuesta); 
             if (respuesta === '1') {
-                return flowDynamic('✅ Has seleccionado *Sí*.'); // Respuesta positiva
+                return flowDynamic('✅ Has seleccionado *Sí*.'); 
             } else if (respuesta === '2') {
-                return flowDynamic('✅ Has seleccionado *No*.'); // Respuesta negativa
+                return flowDynamic('✅ Has seleccionado *No*.'); 
             } else {
-                return fallBack(); // Manejo de respuesta no válida
+                return fallBack(); 
             }
         },
     [flowOtroPermisoSi,flowOtroPermisoNo]
@@ -240,7 +238,6 @@ const flowSelectProtocolo = addKeyword([permissionInstance.areaDestination])
     .addAnswer(
     [
         '🔍 A continuación, selecciona el protocolo respectivo:',
-        '',
         '👉 *1*. HTTP, HTTPS',
         '👉 *2*. Otro'
     ],
@@ -504,12 +501,9 @@ const flowPrincipal = addKeyword(['doc'])
                 return fallBack();
             }
         },
-        [flowGArquitectura, flowIpOrigen] // Flujos que siguen según la opción seleccionada
+        [flowGArquitectura, flowIpOrigen] 
     );
 
 module.exports = {
-    flowPrincipal,
-    flowIpOrigen,
-    flowGArquitectura,
-    flowSelectDesOrigen
+    flowPrincipal
 };
