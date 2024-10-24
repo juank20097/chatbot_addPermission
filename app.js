@@ -26,9 +26,14 @@ const main = async () => {
         database: adapterDB,
     })
     QRPortalWeb();
-    (async () => {
-        await dbService.alterTable();
-    })();
-    }
+    const intervalId = setInterval(async () => {
+        try {
+            await dbService.alterTable();
+            clearInterval(intervalId);
+        } catch (error) {
+            console.error('Error ejecutando alterTable:', error);
+        }
+    }, 3000);
+    };
 
 main()
