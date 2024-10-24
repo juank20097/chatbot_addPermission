@@ -29,7 +29,7 @@ const flowOtroPermisoNo = addKeyword(['2'])
         '⏳ *Por favor, espera.* \n' +
         '📝 Estamos generando tu documento de permiso. Te lo enviaremos en breve.'
     )
-    .addAction(async (ctx, {provider, gotoFlow}) => {
+    .addAction(() => {
         (async () => {
             try {
                 const permissionsArrayJSON = JSON.stringify(permissionsArray);
@@ -40,7 +40,9 @@ const flowOtroPermisoNo = addKeyword(['2'])
                 console.error('Error consumiendo el servicio:', error.message);
             }
         })();
-        await provider.sendFile(ctx.from+'@s.whatsapp.net', 'doc/frontend.pdf')
+    })
+    .addAction(async (ctx, {provider, gotoFlow}) => {
+        await provider.sendFile(ctx.from+'@s.whatsapp.net', 'doc/GRI-GTIC-P01-F02_SolicitudPermisos_2024-10-24_110539.xlsx')
         return gotoFlow(flowSigner)
     }
     );
@@ -489,7 +491,7 @@ const flowSelectIpOrigen = addKeyword([])
         [flowGArquitectura, flowIpOrigen]
     )
 
-const flowPrincipal = addKeyword(['doc'])
+const flowPrincipal = addKeyword(['permiso'])
     .addAction(() => {
         permissionsArray= [];
         permissionInstance = new Permission();  

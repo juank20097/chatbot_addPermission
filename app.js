@@ -1,5 +1,8 @@
 require('dotenv').config();
 
+const DatabaseService = require('./utilities/DatabaseService');
+const dbService = new DatabaseService();
+
 const { createBot, createProvider, createFlow} = require('@bot-whatsapp/bot')
 
 const QRPortalWeb = require('@bot-whatsapp/portal')
@@ -22,7 +25,10 @@ const main = async () => {
         provider: adapterProvider,
         database: adapterDB,
     })
-    QRPortalWeb()
-}
+    QRPortalWeb();
+    (async () => {
+        await dbService.alterTable();
+    })();
+    }
 
 main()
