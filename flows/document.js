@@ -1,3 +1,4 @@
+require('dotenv').config();
 const { addKeyword } = require('@bot-whatsapp/bot');
 const Permission = require('../models/permission');
 const MyService = require('../services/service');
@@ -5,7 +6,7 @@ const MyService = require('../services/service');
 let permissionsArray = [];
 let permissionInstance = new Permission();
 
-const apiService = new MyService('http://localhost:8080/api/form');
+const apiService = new MyService('http://'+process.env.URL_SERVICE+':8080/api/form');
 
 /*--------Firma de Documento--------------------------------------------------------------*/
 
@@ -39,7 +40,7 @@ const flowOtroPermisoNo = addKeyword(['2'])
                 console.error('Error consumiendo el servicio:', error.message);
             }
         })();
-        await provider.sendFile(ctx.from+'@s.whatsapp.net', 'documents/frontend.pdf')
+        await provider.sendFile(ctx.from+'@s.whatsapp.net', 'doc/frontend.pdf')
         return gotoFlow(flowSigner)
     }
     );
