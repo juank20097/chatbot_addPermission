@@ -1,8 +1,11 @@
 const { addKeyword } = require('@bot-whatsapp/bot');
 const Permission = require('../models/permission');
+const MyService = require('../services/service');
 
 let permissionsArray = [];
 let permissionInstance = new Permission();
+
+const apiService = new MyService('http://localhost:8080/api/form');
 
 /*--------Firma de Documento--------------------------------------------------------------*/
 
@@ -10,13 +13,14 @@ const flowSigner = addKeyword([])
     .addAnswer(
         '🙏 *Gracias por tu paciencia.*' )
     .addAnswer(
+            '✅ El proceso ha finalizado con éxito.' )
+    .addAnswer(
         '👨‍💻 *Información del Desarrollador:* \n' +
         '📛 *Nombre:* Juan Carlos Estévez Hidalgo \n' +
         '📧 *Correo:* juank20097@gmail.com \n' +
         '📱 *Teléfono:* +593 980365958 \n' +
         '📂 *Repositorio GitHub:* https://github.com/juank20097 \n' )
-    .addAnswer(
-            '✅ El proceso ha finalizado con éxito.' )
+    
 
 /*--------Validación de otro Permiso--------------------------------------------------------------*/
 const flowOtroPermisoNo = addKeyword(['2'])
@@ -25,6 +29,16 @@ const flowOtroPermisoNo = addKeyword(['2'])
         '📝 Estamos generando tu documento de permiso. Te lo enviaremos en breve.'
     )
     .addAction(async (ctx, {provider, gotoFlow}) => {
+        (async () => {
+            try {
+                const permissionsArrayJSON = JSON.stringify(permissionsArray);
+                const postResponse = await apiService.postData('/excel', permissionsArrayJSON);
+                console.log('Datos obtenidos con POST:', postResponse);
+        
+            } catch (error) {
+                console.error('Error consumiendo el servicio:', error.message);
+            }
+        })();
         await provider.sendFile(ctx.from+'@s.whatsapp.net', 'documents/frontend.pdf')
         return gotoFlow(flowSigner)
     }
@@ -61,13 +75,13 @@ const flowVerSi = addKeyword(['1'])
         '👉 *2.* No'
     ],
     { capture: true }, 
-        (ctx, { flowDynamic, fallBack }) => {
+        async (ctx, { flowDynamic, fallBack }) => {
             const respuesta = ctx.body.trim(); 
             console.log('Opción de otroPermiso seleccionada:', respuesta); 
             if (respuesta === '1') {
-                return flowDynamic('✅ Has seleccionado *Sí*.'); 
+                return await flowDynamic('✅ Has seleccionado *Sí*.'); 
             } else if (respuesta === '2') {
-                return flowDynamic('✅ Has seleccionado *No*.'); 
+                return await flowDynamic('✅ Has seleccionado *No*.'); 
             } else {
                 return fallBack(); 
             }
@@ -76,7 +90,7 @@ const flowVerSi = addKeyword(['1'])
 )
 
 const flowVerificacion = addKeyword([permissionInstance.duration,'1'])
-.addAction((ctx, { flowDynamic }) => {
+.addAction(async (ctx, { flowDynamic }) => {
     const respuesta = [
         'Esta información es la guardada actualmente:',
         `*IP de Origen*: ${permissionInstance.ipOrigin || 'No definida'}`,
@@ -89,7 +103,7 @@ const flowVerificacion = addKeyword([permissionInstance.duration,'1'])
         `*Puertos*: ${permissionInstance.ports || 'No definida'}`,
         `*Duración*: ${permissionInstance.duration || 'No definida'}`,
     ].join('\n');
-    return flowDynamic([{ body: respuesta }]);
+    return await flowDynamic([{ body: respuesta }]);
 },
 )
 .addAnswer(
@@ -99,13 +113,13 @@ const flowVerificacion = addKeyword([permissionInstance.duration,'1'])
         '👉 *2.* No'
     ],
     { capture: true }, 
-    (ctx, { flowDynamic, fallBack }) => {
+    async (ctx, { flowDynamic, fallBack }) => {
         const respuesta = ctx.body.trim();
         console.log('Opción de almacenado seleccionada:', respuesta);
         if (respuesta === '1') {
-            return flowDynamic('✅ Has seleccionado *Si*.');
+            return await flowDynamic('✅ Has seleccionado *Si*.');
         } else if (respuesta === '2') {
-            return flowDynamic('✅ Has seleccionado *No*.');
+            return await flowDynamic('✅ Has seleccionado *No*.');
         } else {
             return fallBack();
         }
@@ -120,7 +134,7 @@ const flowPermanente = addKeyword(['1'])
         permissionInstance.duration = 'Permanente';
         console.log('✅ Duración guardada:', permissionInstance.duration);
     })
-    .addAction((ctx, { flowDynamic }) => {
+    .addAction(async (ctx, { flowDynamic }) => {
         const respuesta = [
             'Esta información es la guardada actualmente:',
             `*IP de Origen*: ${permissionInstance.ipOrigin || 'No definida'}`,
@@ -133,7 +147,7 @@ const flowPermanente = addKeyword(['1'])
             `*Puertos*: ${permissionInstance.ports || 'No definida'}`,
             `*Duración*: ${permissionInstance.duration || 'No definida'}`,
         ].join('\n');
-        return flowDynamic([{ body: respuesta }]);
+        return await flowDynamic([{ body: respuesta }]);
     },
     )
     .addAnswer(
@@ -143,13 +157,13 @@ const flowPermanente = addKeyword(['1'])
             '👉 *2.* No'
         ],
         { capture: true }, 
-        (ctx, { flowDynamic, fallBack }) => {
+        async (ctx, { flowDynamic, fallBack }) => {
             const respuesta = ctx.body.trim();
             console.log('Opción de almacenado seleccionada:', respuesta);
             if (respuesta === '1') {
-                return flowDynamic('✅ Has seleccionado *Si*.');
+                return await flowDynamic('✅ Has seleccionado *Si*.');
             } else if (respuesta === '2') {
-                return flowDynamic('✅ Has seleccionado *No*.');
+                return await flowDynamic('✅ Has seleccionado *No*.');
             } else {
                 return fallBack();
             }
@@ -177,14 +191,14 @@ const flowSelectDuracion = addKeyword([permissionInstance.protocol,'1'])
         '👉 *2.* Otro'
     ],
     { capture: true }, 
-    (ctx, { flowDynamic, fallBack }) => {
+    async (ctx, { flowDynamic, fallBack }) => {
         const respuesta = ctx.body.trim();
         console.log('Opción de duración seleccionada:', respuesta);
 
         if (respuesta === '1') {
-            return flowDynamic('✅ Has seleccionado *Permanente*.');
+            return await flowDynamic('✅ Has seleccionado *Permanente*.');
         } else if (respuesta === '2') {
-            return flowDynamic('✅ Has seleccionado *Otro*.');
+            return await flowDynamic('✅ Has seleccionado *Otro*.');
         } else {
             return fallBack();
         }
@@ -242,14 +256,14 @@ const flowSelectProtocolo = addKeyword([permissionInstance.areaDestination])
         '👉 *2*. Otro'
     ],
     { capture: true }, 
-    (ctx, { flowDynamic, fallBack }) => {
+    async (ctx, { flowDynamic, fallBack }) => {
         const respuesta = ctx.body.trim();
         console.log('Opción de protocolo seleccionada:', respuesta);
 
         if (respuesta === '1') {
-            return flowDynamic('✅ Has seleccionado *HTTP, HTTPS*.');
+            return await flowDynamic('✅ Has seleccionado *HTTP, HTTPS*.');
         } else if (respuesta === '2') {
-            return flowDynamic('✅ Has seleccionado *Otro*.');
+            return await flowDynamic('✅ Has seleccionado *Otro*.');
         } else {
             return fallBack();
         }
@@ -332,14 +346,14 @@ const flowSelectAreaOrigen = addKeyword([permissionInstance.descriptionOrigin,'1
         '👉 *2*. Otro'
     ],
     { capture: true }, 
-    (ctx, { flowDynamic, fallBack }) => {
+    async (ctx, { flowDynamic, fallBack }) => {
         const respuesta = ctx.body.trim();
         console.log('Área seleccionada:', respuesta);
 
         if (respuesta === '1') {
-            return flowDynamic('✅ Has seleccionado *SDNAS*.');
+            return await flowDynamic('✅ Has seleccionado *SDNAS*.');
         } else if (respuesta === '2') {
-            return flowDynamic('✅ Has seleccionado *Otra área*.');
+            return await flowDynamic('✅ Has seleccionado *Otra área*.');
         } else {
             return fallBack();
         }
@@ -361,14 +375,14 @@ const flowDesGArquitectura = addKeyword(['1'])
             '👉 *2*. Otro'
         ],
         { capture: true }, 
-        (ctx, { flowDynamic, fallBack }) => {
+        async (ctx, { flowDynamic, fallBack }) => {
             const respuesta = ctx.body.trim();
             console.log('Área seleccionada:', respuesta);
 
             if (respuesta === '1') {
-                return flowDynamic('✅ Has seleccionado *SDNAS*.');
+                return await flowDynamic('✅ Has seleccionado *SDNAS*.');
             } else if (respuesta === '2') {
-                return flowDynamic('✅ Has seleccionado *Otra área*.');
+                return await flowDynamic('✅ Has seleccionado *Otra área*.');
             } else {
                 return fallBack();
             }
@@ -395,14 +409,14 @@ const flowSelectDesOrigen = addKeyword([permissionInstance.ipOrigin,'1'])
         '👉 *2*. Otra descripción'
     ],
     { capture: true },
-    (ctx, { flowDynamic, fallBack }) => {
+    async (ctx, { flowDynamic, fallBack }) => {
         const respuesta = ctx.body.trim();
         console.log('Opción de descripción seleccionada:', respuesta);
 
         if (respuesta === '1') {
-            return flowDynamic('✅ Has seleccionado *Grupo Arquitectura*.');
+            return await flowDynamic('✅ Has seleccionado *Grupo Arquitectura*.');
         } else if (respuesta === '2') {
-            return flowDynamic('✅ Has seleccionado *Otra descripción*.');
+            return await flowDynamic('✅ Has seleccionado *Otra descripción*.');
         } else {
             return fallBack();
         }
@@ -424,14 +438,14 @@ const flowGArquitectura = addKeyword(['1'])
             '👉 *2*. Otra descripción'
         ],
         { capture: true },
-        (ctx, { flowDynamic, fallBack }) => {
+        async (ctx, { flowDynamic, fallBack }) => {
             const respuesta = ctx.body.trim();
             console.log('Opción de descripción seleccionada:', respuesta);
 
             if (respuesta === '1') {
-                return flowDynamic('✅ Has seleccionado *Grupo Arquitectura*.');
+                return await flowDynamic('✅ Has seleccionado *Grupo Arquitectura*.');
             } else if (respuesta === '2') {
-                return flowDynamic('✅ Has seleccionado *Otra descripción*.');
+                return await flowDynamic('✅ Has seleccionado *Otra descripción*.');
             } else {
                 return fallBack();
             }
@@ -460,13 +474,13 @@ const flowSelectIpOrigen = addKeyword([])
             '👉 *2*. Otra dirección de IP'
         ],
         { capture: true },
-        (ctx, { flowDynamic, fallBack }) => {
+        async (ctx, { flowDynamic, fallBack }) => {
             const respuesta = ctx.body.trim();
             console.log('Respuesta capturada en el flujo principal:', respuesta);
             if (respuesta === '1') {
-                return flowDynamic('✅ Has seleccionado *Grupo Arquitectura*.');
+                return await flowDynamic('✅ Has seleccionado *Grupo Arquitectura*.');
             } else if (respuesta === '2') {
-                return flowDynamic('✅ Has seleccionado *Otra dirección de IP*');
+                return await flowDynamic('✅ Has seleccionado *Otra dirección de IP*');
             } else {
                 return fallBack();
             }
@@ -490,13 +504,13 @@ const flowPrincipal = addKeyword(['doc'])
             '👉 *2*. Otra dirección de IP'
         ],
         { capture: true },
-        (ctx, { flowDynamic, fallBack }) => {
+        async (ctx, { flowDynamic, fallBack }) => {
             const respuesta = ctx.body.trim();
             console.log('Respuesta capturada en el flujo principal:', respuesta);
             if (respuesta === '1') {
-                return flowDynamic('✅ Has seleccionado *Grupo Arquitectura*.');
+                return await flowDynamic('✅ Has seleccionado *Grupo Arquitectura*.');
             } else if (respuesta === '2') {
-                return flowDynamic('✅ Has seleccionado *Otra dirección de IP*');
+                return await flowDynamic('✅ Has seleccionado *Otra dirección de IP*');
             } else {
                 return fallBack();
             }
