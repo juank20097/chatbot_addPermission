@@ -43,11 +43,15 @@ const flowOtroPermisoNo = addKeyword(['2'])
             } catch (error) {
                 console.error('Error consumiendo el servicio:', error.message);
             }
-            
         })();
     })
     .addAction(async (ctx, {provider, gotoFlow}) => {
+        const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+        await delay(5000);
+        // Production
         await provider.sendFile(ctx.from+'@s.whatsapp.net', 'doc/'+documentName)
+        // Develop
+        // await provider.sendFile(ctx.from+'@s.whatsapp.net', 'doc/GRI-GTIC-P01-F02_SolicitudPermisos_2024-10-24_110539.xlsx')
         return gotoFlow(flowSigner)
     }
     );
