@@ -1,0 +1,64 @@
+version: '3.8'
+services:
+  postgres:
+    container_name: postgres
+    image: postgres:15
+    restart: always
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=root
+      - POSTGRES_DB=access_doc
+    ports:
+      - 5432:5432
+    volumes:
+      - db:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d access_doc"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+  
+
+# Github: https://github.com/juank20097/access_doc   ///   docker build -t ws_permission:latest .  
+  ws-permission-back:
+    image: ws_permission
+    container_name: ws-permission-back
+    depends_on:
+      - postgres
+    restart: always
+    ports:
+      - "8080:8080"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/access_doc
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: root
+    volumes:
+    - ./documentos:/app/src/main/resources/doc
+
+# Github: https://github.com/juank20097/chatbot_addPermission   ///   docker build -t chatbot_permission:latest . 
+  chatbot-permission:
+    image: chatbot_permission
+    container_name: chatbot-permission
+    depends_on:
+      postgres:
+        condition: service_healthy
+      ws-permission-back:
+        condition: service_started
+    ports:
+      - "3000:3000"
+    restart: always  
+    environment:
+      - POSTGRES_DB_HOST=postgres
+      - POSTGRES_DB_USER=postgres
+      - POSTGRES_DB_PASSWORD=root
+      - POSTGRES_DB_NAME=chatbot
+      - POSTGRES_DB_PORT=5432
+      - URL_SERVICE=ws-permission-back
+    volumes:
+    - ./documentos:/app/doc
+
+volumes:
+  db:
+    driver: local

@@ -476,7 +476,11 @@ const flowIpOrigen = addKeyword(['2'])
         [flowSelectDesOrigen]
     );
 
-const flowSelectIpOrigen = addKeyword([])     
+const flowSelectIpOrigen = addKeyword([]) 
+    .addAction(() => {
+        permissionInstance = new Permission();  
+        console.log('🔄 Instancia de permisos creada.');
+    })    
     .addAnswer(
         [
             '🔐 Vamos a configurar la *dirección de IP de origen* para los permisos.',
