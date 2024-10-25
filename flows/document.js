@@ -5,6 +5,10 @@ const MyService = require('../services/service');
 
 let permissionsArray = [];
 let permissionInstance = new Permission();
+let name;
+let dni;
+
+let documentName=''
 
 const apiService = new MyService('http://'+process.env.URL_SERVICE+':8080/api/form');
 
@@ -33,16 +37,17 @@ const flowOtroPermisoNo = addKeyword(['2'])
         (async () => {
             try {
                 const permissionsArrayJSON = JSON.stringify(permissionsArray);
-                const postResponse = await apiService.postData('/excel', permissionsArrayJSON);
+                const postResponse = await apiService.postData('/excel/' + dni + '/' + encodeURIComponent(name), permissionsArrayJSON);
                 console.log('Datos obtenidos con POST:', postResponse);
-        
+                documentName = postResponse.document;
             } catch (error) {
                 console.error('Error consumiendo el servicio:', error.message);
             }
+            
         })();
     })
     .addAction(async (ctx, {provider, gotoFlow}) => {
-        await provider.sendFile(ctx.from+'@s.whatsapp.net', 'doc/GRI-GTIC-P01-F02_SolicitudPermisos_2024-10-24_110539.xlsx')
+        await provider.sendFile(ctx.from+'@s.whatsapp.net', 'doc/'+documentName)
         return gotoFlow(flowSigner)
     }
     );
@@ -495,31 +500,28 @@ const flowPrincipal = addKeyword(['permiso'])
     .addAction(() => {
         permissionsArray= [];
         permissionInstance = new Permission();  
-        console.log('Instancia de permisos creada y array de permisos reiniciado.');
+        console.log('🔄 Instancia de permisos creada y array de permisos reiniciado.');
     })
     .addAnswer('👋 ¡Bienvenido al sistema de generación de permisos! 🎉')
+    .addAnswer('😊 Antes de comenzar, necesitamos saber tu nombre completo.')
     .addAnswer(
-        [
-            '🔐 Vamos a configurar la *dirección de IP de origen* para los permisos.',
-            '',
-            'Por favor, selecciona una de las siguientes opciones:',
-            '👉 *1*. Grupo Arquitectura',
-            '👉 *2*. Otra dirección de IP'
-        ],
+        '✏️ *Por favor, escríbelo a continuación:*',
         { capture: true },
-        async (ctx, { flowDynamic, fallBack }) => {
-            const respuesta = ctx.body.trim();
-            console.log('Respuesta capturada en el flujo principal:', respuesta);
-            if (respuesta === '1') {
-                return await flowDynamic('✅ Has seleccionado *Grupo Arquitectura*.');
-            } else if (respuesta === '2') {
-                return await flowDynamic('✅ Has seleccionado *Otra dirección de IP*');
-            } else {
-                return fallBack();
-            }
+        async (ctx,{ flowDynamic }) => {
+            name = ctx.body.trim(); 
+            console.log('✅ Nombre guardado:', name);
+            await flowDynamic(`😊 ¡Gracias, *${name}*! Ahora necesitamos tu número de cédula para continuar.`);
+        }
+    )
+    .addAnswer(
+        '*Por favor, ingrésalo a continuación:*',
+        { capture: true },
+        (ctx) => {
+            dni = ctx.body.trim(); 
+            console.log('✅ Dni guardado:', dni);
         },
-        [flowGArquitectura, flowIpOrigen] 
-    );
+        [flowSelectIpOrigen]
+    )
 
 module.exports = {
     flowPrincipal

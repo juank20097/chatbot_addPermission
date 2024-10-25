@@ -3,6 +3,8 @@ const MyService = require('../services/service');
 
 let permissionsArray = [];
 let permissionInstance = new Permission();
+let name='Juan Carlos Estévez';
+let dni='1003422365'
 
 const apiService = new MyService('http://localhost:8080/api/form');
 
@@ -26,9 +28,8 @@ permissionsArray.push(permissionInstance);
 (async () => {
     try {
         const permissionsArrayJSON = JSON.stringify(permissionsArray);
-        const postResponse = await apiService.postData('/excel', permissionsArrayJSON);
+        const postResponse = await apiService.postData('/excel/'+dni+'/'+encodeURIComponent(name), permissionsArrayJSON);
         console.log('Datos obtenidos con POST:', postResponse);
-
     } catch (error) {
         console.error('Error consumiendo el servicio:', error.message);
     }
